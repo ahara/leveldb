@@ -143,58 +143,10 @@ int main(int argc, char** argv) {
     options.create_if_missing = true;
     options.max_open_files = 4000;
     options.filter_policy = leveldb::NewBloomFilterPolicy(16);
-    //leveldb::Status status = leveldb::DB::Open(options, "/tmp/testdb", &db);
-    leveldb::Status status = leveldb::DB::Open(options, "/tmp/t2", &db);
+    leveldb::Status status = leveldb::DB::Open(options, "/tmp/testdb", &db);
     cout << status.ToString() << endl;
     assert(status.ok());
 
-    // Creating keys
-    /*leveldb::Slice key1 = "hello";
-    leveldb::Slice key2 = "world";
-    int words[] = {0x39393939, 0x35363738, 50};  // INT has reversed byte order
-    leveldb::Slice key3 = (char *) words;
-    std::string str = key1.ToString();
-    assert(str == std::string("hello"));
-
-    std::string value("10");
-    leveldb::Status s = db->Put(leveldb::WriteOptions(), key1, value);
-    printf("Adding (%s, %s): %s\n", key1.ToString().c_str(), value.c_str(), s.ToString().c_str());
-    s = db->Get(leveldb::ReadOptions(), key1, &value);
-    if (s.ok()) s = db->Put(leveldb::WriteOptions(), key2, value);
-    if (s.ok()) s = db->Put(leveldb::WriteOptions(), key3, to_string(22));
-    //if (s.ok()) s = db->Delete(leveldb::WriteOptions(), key1);
-
-    // Iterating over the keys
-    cout << "Iterating: " << endl;
-    leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());
-    for (it->SeekToFirst(); it->Valid(); it->Next()) {
-        cout << it->key().ToString() << ": "  << it->value().ToString() << endl;
-    }
-    assert(it->status().ok());  // Check for any errors found during the scan
-    delete it;
-
-    // Find and iterate
-    /*int i;
-    for(i = 0; i < 5e7; i++) {
-        leveldb::Slice k = to_string(i);
-        if (s.ok()) s = db->Put(leveldb::WriteOptions(), k, to_string(i * i));
-    }
-    cout << i << endl;
-
-    s = db->Get(leveldb::ReadOptions(), to_string(8), &value);
-    cout << s.ToString() << value << endl;
-
-    cout << "Iterating: " << endl;
-    leveldb::Slice start = to_string(7);
-    it = db->NewIterator(leveldb::ReadOptions());
-    i = 0;
-    //for(it->Seek(start); it->Valid() && it->key().ToString() < "999"; it->Next(), i++) {
-    for (it->SeekToFirst(); it->Valid(); it->Next(), i++) {
-        //cout << it->key().ToString() << "(: " << i << "): " << it->value().ToString() << endl;
-    }
-    cout << i << endl;
-    assert(it->status().ok());  // Check for any errors found during the scan
-    delete it;*/
 
     // Read ttable data
     //ifstream infile("/home/adam/Downloads/src_trg_100K.idttable");
@@ -207,8 +159,6 @@ int main(int argc, char** argv) {
     vector<Vector<WordIndex> > perfTest;
     while(getline(infile, line) && iter_cnt < 1e8) {  //9e6
         iter_cnt++;
-        //if (iter_cnt < 80e5)
-        //    continue;
         src.clear();
         trg.clear();
         int n = 0;
@@ -239,9 +189,9 @@ int main(int argc, char** argv) {
         cout << endl;*/
 
         // Add src
-        /*addEntry(db, getSrc(src), count);
+        addEntry(db, getSrc(src), count);
         addEntry(db, trg, count);
-        addEntry(db, getTrgSrc(src, trg), count);*/
+        addEntry(db, getTrgSrc(src, trg), count);
 
         if (iter_cnt % 2500 == 0) {
             //cout << vectorToStr(trg) << endl;
@@ -252,29 +202,11 @@ int main(int argc, char** argv) {
     cout << "Max Word Index: " << max_word_index << endl;
 
 
-    /*cout << "Iterating: " << endl;
-    leveldb::Slice start = to_string(7);
-    leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());*/
     int i = 0;
-    //for(it->Seek(start); it->Valid() && it->key().ToString() < "999"; it->Next(), i++) {
-    /*for (it->SeekToFirst(); it->Valid(); it->Next(), i++) {
-        //cout << it->key().ToString() << "(: " << i << "): " << it->value().ToString() << endl;
-    }
-    cout << i << endl;
-    assert(it->status().ok());  // Check for any errors found during the scan
-    delete it;*/
 
     random_shuffle(perfTest.begin(), perfTest.end());
     int src_cnt = 0;
     clock_t begin = clock();
-
-    /*leveldb::DB* db;
-    leveldb::Options options;
-    options.create_if_missing = true;
-    options.max_open_files = 4000;
-    options.filter_policy = leveldb::NewBloomFilterPolicy(16);
-    leveldb::Status status = leveldb::DB::Open(options, "/tmp/testdb", &db);
-    assert(status.ok());*/
 
     for(i = 0; i < perfTest.size(); i++) {
         int c = getSrcPhrases(db, perfTest[i]);
