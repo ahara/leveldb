@@ -46,7 +46,8 @@ TESTS = \
 	util/crc32c_test \
 	util/env_posix_test \
 	util/env_test \
-	util/hash_test
+	util/hash_test \
+	util/wi_db_test
 
 UTILS = \
 	db/db_bench \
@@ -388,6 +389,9 @@ $(STATIC_OUTDIR)/memenv_test:$(STATIC_OUTDIR)/helpers/memenv/memenv_test.o $(STA
 
 $(SHARED_OUTDIR)/db_bench:$(SHARED_OUTDIR)/db/db_bench.o $(SHARED_LIBS) $(TESTUTIL)
 	$(XCRUN) $(CXX) $(LDFLAGS) $(CXXFLAGS) $(PLATFORM_SHARED_CFLAGS) $(SHARED_OUTDIR)/db/db_bench.o $(TESTUTIL) $(SHARED_OUTDIR)/$(SHARED_LIB3) -o $@ $(LIBS)
+
+$(STATIC_OUTDIR)/wi_db_test:util/wi_db_test.cc $(STATIC_LIBOBJECTS) $(TESTHARNESS)
+	$(CXX) $(LDFLAGS) $(CXXFLAGS) util/wi_db_test.cc $(STATIC_LIBOBJECTS) $(TESTHARNESS) -o $@ $(LIBS)
 
 .PHONY: run-shared
 run-shared: $(SHARED_OUTDIR)/db_bench
