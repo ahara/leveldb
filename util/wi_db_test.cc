@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <math.h>
+#include <map>
 #include <sstream>
 #include <stdio.h>
 #include <string>
@@ -47,19 +48,17 @@ string vectorToStr(const Vector<WordIndex>& s)
 
 string vectorToString(const Vector<WordIndex>& s)
 {
-    //return vectorToStr(s);
-
-  Vector<WordIndex> str;
-  for(int i = 0; i < s.size(); i++) {
-    // Use WORD_INDEX_MODULO_BYTES bytes to encode index
-    for(int j = WORD_INDEX_MODULO_BYTES - 1; j >= 0; j--) {
-      str.push_back(1 + (s[i] / (int) pow(WORD_INDEX_MODULO_BASE, j) % WORD_INDEX_MODULO_BASE));
+    Vector<WordIndex> str;
+    for(int i = 0; i < s.size(); i++) {
+        // Use WORD_INDEX_MODULO_BYTES bytes to encode index
+        for(int j = WORD_INDEX_MODULO_BYTES - 1; j >= 0; j--) {
+            str.push_back(1 + (s[i] / (int) pow(WORD_INDEX_MODULO_BASE, j) % WORD_INDEX_MODULO_BASE));
+        }
     }
-  }
 
-  string phrase(str.begin(), str.end());
+    string phrase(str.begin(), str.end());
 
-  return phrase;
+    return phrase;
 }
 
 
@@ -137,6 +136,22 @@ int getSrcPhrases(leveldb::DB* db, const Vector<WordIndex>& t) {
 }
 
 
+WordIndex getSymbolId(map<string, WordIndex> &vocab, string symbol) {
+    map<string, WordIndex>::iterator it = vocab.find(symbol);
+
+    WordIndex wi = -1;
+
+    if(it == vocab.end()) {
+        wi = vocab.size();
+        vocab[symbol] = wi;
+    } else {
+        wi = it->second;
+    }
+
+    return wi;
+}
+
+
 int main(int argc, char** argv) {
     leveldb::DB* db;
     leveldb::Options options;
@@ -147,59 +162,50 @@ int main(int argc, char** argv) {
     cout << status.ToString() << endl;
     assert(status.ok());
 
+    map<string, WordIndex> vocab;
+    vocab["<unk>"] = 0;
+    vocab["<s>"] = 1;
+    vocab["</s>"] = 2;
+    vocab["<sp_sym1>"] = 3;
+
 
     // Read ttable data
-    //ifstream infile("/home/adam/Downloads/src_trg_100K.idttable");
-    ifstream infile("/home/adam/Downloads/src_trg_20M.idttable");
+    ifstream infile("/home/adam/Downloads/trg.lm");
     string line;
+    vector<string> line_vec;
     int iter_cnt = 0;
-    int max_word_index = -1;
     float cs, cst;
-    vector<unsigned int> src, trg;
+    vector<WordIndex> src;
     vector<Vector<WordIndex> > perfTest;
-    while(getline(infile, line) && iter_cnt < 1e8) {  //9e6
+
+    while(getline(infile, line) && iter_cnt < 5e8) {  //9e6
         iter_cnt++;
         src.clear();
-        trg.clear();
-        int n = 0;
+        line_vec.clear();
         std::istringstream iss(line);
         string item;
-        float count;
 
         while(iss >> item) {
-            if (item == "|||") {
-                n++;
-            } else if (n == 0) {
-                src.push_back(atoi(item.c_str()));
-            } else if (n == 1) {
-                int trg_index = atoi(item.c_str());
-                trg.push_back(trg_index);
-                max_word_index = max(max_word_index, trg_index);
-            } else if (n == 2) {
-                n++;
-            } else if (n == 3) {
-                count = atof(item.c_str());
-            }
+            line_vec.push_back(item);
         }
 
-        /*cout << "Item: ";
-        for(int i = 0; i < src.size(); i++) {
-            cout << src[i] << " ";
+        for(size_t i = 0; i < line_vec.size() - 2; i++) {
+            WordIndex wi = getSymbolId(vocab, line_vec[i]);
+            src.push_back(wi);
         }
-        cout << endl;*/
+
+        float count = atof(line_vec[line_vec.size() - 1].c_str());
 
         // Add src
-        addEntry(db, getSrc(src), count);
-        addEntry(db, trg, count);
-        addEntry(db, getTrgSrc(src, trg), count);
+        addEntry(db, src, count);
 
         if (iter_cnt % 2500 == 0) {
-            //cout << vectorToStr(trg) << endl;
-            perfTest.push_back(trg);
+            //cout << vectorToStr(src) << endl;
+            perfTest.push_back(src);
         }
     }
 
-    cout << "Max Word Index: " << max_word_index << endl;
+    cout << "Vocab size: " << vocab.size() << endl;
 
 
     int i = 0;
@@ -209,7 +215,7 @@ int main(int argc, char** argv) {
     clock_t begin = clock();
 
     for(i = 0; i < perfTest.size(); i++) {
-        int c = getSrcPhrases(db, perfTest[i]);
+        int c = findCount(db, perfTest[i]);
         //cout << i << ": " << c << " " << vectorToStr(perfTest[i]) << endl;
         src_cnt += c;
     }
