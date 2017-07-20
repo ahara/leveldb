@@ -197,9 +197,10 @@ int main(int argc, char** argv) {
         float count = atof(line_vec[line_vec.size() - 1].c_str());
 
         // Add src
-        addEntry(db, src, count);
+        if(iter_cnt % 2000 != 0)
+            addEntry(db, src, count);
 
-        if (iter_cnt % 2500 == 0) {
+        if (iter_cnt % 1000 == 0) {
             //cout << vectorToStr(src) << endl;
             perfTest.push_back(src);
         }
